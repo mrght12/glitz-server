@@ -12,21 +12,6 @@ module.exports = (req, res) => {
 
     io.on("connection", (socket) => {
       
-      socket.on("register", (data) => {
-        users[socket.id] = {
-          username: data.username || "User",
-          email: data.email || ""
-        };
-        socket.emit("registered", users[socket.id]);
-      });
-
-      socket.on("login", (data) => {
-        socket.emit("loginSuccess", {
-          username: data.email || "User",
-          email: data.email || ""
-        });
-      });
-
       socket.on("createGroup", (data) => {
         const group = {
           id: Date.now().toString(),
@@ -68,10 +53,6 @@ module.exports = (req, res) => {
         }
         
         io.to(data.groupId).emit("newGroupMessage", msg);
-      });
-
-      socket.on("disconnect", () => {
-        delete users[socket.id];
       });
 
     });
