@@ -7,7 +7,8 @@ module.exports = (req, res) => {
   if (!res.socket.server.io) {
     const io = new Server(res.socket.server, {
       path: "/api/socket",
-      cors: { origin: "*" }
+      cors: { origin: "*" },
+      transports: ["polling", "websocket"]
     });
 
     io.on("connection", (socket) => {
@@ -16,7 +17,6 @@ module.exports = (req, res) => {
         const group = {
           id: Date.now().toString(),
           name: data.name,
-          type: data.type || "group",
           messages: []
         };
         groups.push(group);
@@ -29,29 +29,18 @@ module.exports = (req, res) => {
 
       socket.on("joinGroup", (groupId) => {
         socket.join(groupId);
-        const group = groups.find(g => g.id === groupId);
-        if (group) {
-          socket.emit("groupMessages", group.messages);
-        }
       });
 
       socket.on("groupMessage", (data) => {
-        const user = users[socket.id] || { username: "User" };
         const msg = {
           id: Date.now().toString(),
           text: data.text,
-          username: user.username,
+          username: "User",
           time: new Date().toLocaleTimeString("ru-RU", {
             hour: "2-digit",
             minute: "2-digit"
           })
         };
-        
-        const group = groups.find(g => g.id === data.groupId);
-        if (group) {
-          group.messages.push(msg);
-        }
-        
         io.to(data.groupId).emit("newGroupMessage", msg);
       });
 
