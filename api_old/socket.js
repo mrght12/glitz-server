@@ -12,17 +12,14 @@ module.exports = (req, res) => {
 
     io.on("connection", (socket) => {
       
-      // Регистрация
       socket.on("register", (data) => {
         users[socket.id] = {
           username: data.username || "User",
-          email: data.email || "",
-          avatar: ""
+          email: data.email || ""
         };
         socket.emit("registered", users[socket.id]);
       });
 
-      // Вход
       socket.on("login", (data) => {
         socket.emit("loginSuccess", {
           username: data.email || "User",
@@ -30,24 +27,21 @@ module.exports = (req, res) => {
         });
       });
 
-      // Создание группы
       socket.on("createGroup", (data) => {
         const group = {
           id: Date.now().toString(),
           name: data.name,
-          type: data.type,
+          type: data.type || "group",
           messages: []
         };
         groups.push(group);
         io.emit("groupCreated", group);
       });
 
-      // Получить список групп
       socket.on("getGroups", () => {
         socket.emit("groupsList", groups);
       });
 
-      // Присоединиться к группе
       socket.on("joinGroup", (groupId) => {
         socket.join(groupId);
         const group = groups.find(g => g.id === groupId);
@@ -56,7 +50,6 @@ module.exports = (req, res) => {
         }
       });
 
-      // Отправить сообщение в группу
       socket.on("groupMessage", (data) => {
         const user = users[socket.id] || { username: "User" };
         const msg = {
@@ -75,6 +68,10 @@ module.exports = (req, res) => {
         }
         
         io.to(data.groupId).emit("newGroupMessage", msg);
+      });
+
+      socket.on("disconnect", () => {
+        delete users[socket.id];
       });
 
     });
